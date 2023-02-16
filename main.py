@@ -2,6 +2,7 @@
 # Displays a white window with a blue circle in the middle
 
 # Imports
+import math
 import arcade
 import random
 
@@ -12,39 +13,67 @@ SCREEN_TITLE = "Welcome to Arcade"
 RADIUS = 10 
 BLUE_IMG = "./assets/blue.png"
 RED_IMG = "./assets/red.png"
+PURPLE_IMG = "./assets/purple.png"
 
+STEP_SIZE = 3
+
+HALF_PI = math.pi / 2
 class Entity(arcade.Sprite):
-    def __init__(self, image, center_x=0, center_y=0, scale=0.1, border_color=arcade.color.BLACK, border_width=1):
+    def __init__(self, image, center_x=0, center_y=0, scale=0.1, direction_bias=(0, 0)):
         super().__init__(image, scale, center_x=center_x,center_y=center_y)
-        self.border_color = border_color
-        self.border_width = border_width
         # initial position
+        self.direction_bias = direction_bias
         
     def move(self, change_x, change_y):
+        if self.direction_bias:
+            # calculate the angle between the current movement direction and the direction bias
+            current_angle = math.atan2(change_y, change_x)
+            bias_angle = math.atan2(self.direction_bias[1], self.direction_bias[0])
+            angle_diff = bias_angle - current_angle
+
+            # calculate the new movement vector with the direction bias
+            new_angle = current_angle + angle_diff + HALF_PI - random.random() * math.pi
+            speed = math.sqrt(change_x ** 2 + change_y ** 2)
+            change_x = speed * math.cos(new_angle)
+            change_y = speed * math.sin(new_angle)
         self.center_x += change_x
         self.center_y += change_y
         
     def check_for_collision_with_screen(self):
         viewport_left, viewport_right, viewport_bottom, viewport_top = arcade.get_viewport()
         if self.left < viewport_left:
+            self.direction_bias = (1, self.direction_bias[1])
             self.left = viewport_left
         elif self.right > viewport_right:
+            self.direction_bias = (-1, self.direction_bias[1])
             self.right = viewport_right
         if self.bottom < viewport_bottom:
+            self.direction_bias = (self.direction_bias[0], 1)
             self.bottom = viewport_bottom
         elif self.top > viewport_top:
+            self.direction_bias = (self.direction_bias[0], -1)
             self.top = viewport_top
     
     def draw(self):
         super().draw()
-        # border
-        arcade.draw_rectangle_outline(self.center_x, self.center_y, self.width, self.height, self.border_color, self.border_width)
 
     def update(self):
-        self.move(random.random() - 0.5, random.random()- 0.5)
+        self.move(1, 1)
         self.check_for_collision_with_screen()
         return super().update()
     
+class Food(Entity):
+    def __init__(self, center_x=0, center_y=0):
+        super().__init__(PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1)
+        
+    def update(self, blue_entities:list[Entity]):
+        for blue_entity in blue_entities:
+            if arcade.check_for_collision(blue_entity, self):
+                # Blue entity has collided with food, give it a new direction bias
+                blue_entity.direction_bias = (random.uniform(-1, 1), random.uniform(-1, 1))
+                # Remove the food entity
+                self.kill()
+                break
 class Welcome(arcade.Window):
     """Main welcome window
     """
@@ -57,9 +86,10 @@ class Welcome(arcade.Window):
 
         # Set the background window
         arcade.set_background_color(arcade.color.WHITE)
-        
-        self.blue_entity = Entity(BLUE_IMG, center_x= 50, center_y=30)
+        self.food_entity = Food(center_x=200, center_y=200)
+        self.blue_entity = Entity(BLUE_IMG, direction_bias=(-1, -1), center_x= 50, center_y=30)
         self.red_entity = Entity(RED_IMG, center_x= 150, center_y=130)
+        # self.red_entity = Entity(RED_IMG)
 
     def on_draw(self):
         """Called whenever you need to draw your window
@@ -70,6 +100,7 @@ class Welcome(arcade.Window):
 
         self.blue_entity.draw()
         self.red_entity.draw()
+        self.food_entity.draw()
 
         arcade.finish_render()
         
@@ -79,6 +110,7 @@ class Welcome(arcade.Window):
         # self.blue_entity.move(1, 0)
         self.blue_entity.update()
         self.red_entity.update()
+        self.food_entity.update([self.blue_entity])
 
 # Main code entry point
 if __name__ == "__main__":
