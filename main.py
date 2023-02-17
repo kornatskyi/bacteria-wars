@@ -5,7 +5,7 @@
 import math
 import arcade
 import random
-from classes.Entities import Entity, Food, RedEntity
+from classes.Entities import BlueEntity, Entity, Food, RedEntity
 from constants import *
 
 
@@ -23,8 +23,8 @@ class Welcome(arcade.Window):
         arcade.set_background_color(arcade.color.WHITE)
             
         self.food_entity = Food(center_x=200, center_y=200)
-        self.blue_entity = Entity(BLUE_IMG, direction_bias=(-1, -1), center_x= 50, center_y=30)
-        self.red_entity = RedEntity(RED_IMG, direction_bias=(-1, -1), center_x= 150, center_y=130)
+        self.blue_entity = BlueEntity(BLUE_IMG, center_x= 250, center_y=150)
+        self.red_entity = RedEntity(RED_IMG, center_x= 150, center_y=250)
         # self.red_entity = Entity(RED_IMG)
 
     def on_draw(self):
@@ -41,11 +41,13 @@ class Welcome(arcade.Window):
         arcade.finish_render()
         
     def update(self, delta_time):
+        print(delta_time)
         if arcade.check_for_collision(self.red_entity, self.blue_entity):
             print("Collision detected!")
         # self.blue_entity.move(1, 0)
         blue_entities = [self.blue_entity]
-        self.blue_entity.update()
+        red_entities = [self.red_entity]
+        self.blue_entity.update(red_entities)
         self.red_entity.update(blue_entities)
         self.food_entity.update(blue_entities)
 
