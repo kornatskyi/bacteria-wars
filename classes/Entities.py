@@ -1,6 +1,7 @@
 import math
 import random
 import arcade
+from classes.Utils import Point, angle_between_Ox_and_line_on_two_points, distance_between_two_points
 
 from constants import HALF_PI, PURPLE_IMG
 
@@ -10,7 +11,7 @@ class Entity(arcade.Sprite):
         super().__init__(image, scale, center_x=center_x, center_y=center_y)
         # initial position
         self.speed = 5
-        self.movement_angle = math.pi / 8
+        self.movement_angle = math.pi
 
     def move(self):
         delta_x = self.speed * math.cos(self.movement_angle)
@@ -56,9 +57,14 @@ class BlueEntity(Entity):
 class RedEntity(Entity):
     def __init__(self, image, center_x=0, center_y=0, scale=0.1):
         super().__init__(image, center_x, center_y, scale)
-        self.vision_radius = 30
+        self.vision_radius = 100
 
     def update(self, blue_entities: list[BlueEntity]):
+        self_center = Point(self.center_x, self.center_y)
+        for blue_entity in blue_entities:
+            blue_entity_center = Point(blue_entity.center_x, blue_entity.center_y)
+            if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
+                self.movement_angle = angle_between_Ox_and_line_on_two_points(self_center, blue_entity_center)
 
         self.check_for_collision_with_screen()
         super().update()

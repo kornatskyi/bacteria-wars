@@ -23,8 +23,8 @@ class Welcome(arcade.Window):
         arcade.set_background_color(arcade.color.WHITE)
             
         self.food_entity = Food(center_x=200, center_y=200)
-        self.blue_entity = BlueEntity(BLUE_IMG, center_x= 250, center_y=150)
-        self.red_entity = RedEntity(RED_IMG, center_x= 150, center_y=250)
+        self.blue_entity = BlueEntity(BLUE_IMG, center_x= 150, center_y=200)
+        self.red_entity = RedEntity(RED_IMG, center_x= 130, center_y=250)
         # self.red_entity = Entity(RED_IMG)
 
     def on_draw(self):
