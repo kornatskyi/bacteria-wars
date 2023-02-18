@@ -3,10 +3,25 @@
 
 # Imports
 import math
+from typing import Union
 import arcade
 import random
 from classes.Entities import BlueEntity, Entity, Food, RedEntity
 from constants import *
+
+
+class EntityFactory:
+    @staticmethod
+    def create_entity(entity_type: Union["BlueEntity", "Food"]):
+        if entity_type == "BlueEntity":
+            return BlueEntity(BLUE_IMG,
+                              center_x=random.random() * SCREEN_WIDTH,
+                              center_y=random.random() * SCREEN_HEIGHT,
+                              movement_angle=random.random() * 2 * math.pi)
+        if entity_type == "Food":
+            return Food(
+                center_x=random.random() * SCREEN_WIDTH,
+                center_y=random.random() * SCREEN_HEIGHT)
 
 
 class Welcome(arcade.Window):
@@ -23,19 +38,9 @@ class Welcome(arcade.Window):
         # Set the background window
         arcade.set_background_color(arcade.color.WHITE)
 
-        self.food_entities = [Food(
-            center_x=random.random() * SCREEN_WIDTH,
-            center_y=random.random() * SCREEN_HEIGHT,) for _ in range(10)]
-        self.blue_entities = [BlueEntity(BLUE_IMG,
-                                         center_x=random.random() * SCREEN_WIDTH,
-                                         center_y=random.random() * SCREEN_HEIGHT,
-                                         movement_angle=random.random() * 2 * math.pi) for _ in range(10)]
-        # self.red_entity = RedEntity(RED_IMG, center_x= 130, center_y=250)
-        # self.red_entity = Entity(RED_IMG)
+        self.food_entities = [EntityFactory.create_entity("Food")  for _ in range(10)]
 
-    def action_on_all(entities, action):
-        for entity in entities:
-            action(self=entity)
+        self.blue_entities = [EntityFactory.create_entity("BlueEntity") for _ in range(10)]
 
     def on_draw(self):
         """Called whenever you need to draw your window
@@ -63,12 +68,12 @@ class Welcome(arcade.Window):
                 self.blue_entities.remove(entity)
             else:
                 entity.update(self.food_entities)
-                
+
         for entity in self.food_entities[:]:
             if not entity.is_alive:
                 self.food_entities.remove(entity)
             else:
-                entity.update(self.blue_entities)
+                entity.update()
         # for blue_entity in self.blue_entities:
         #     blue_entity.update()
         # self.red_entity.update(blue_entities)
