@@ -1,7 +1,7 @@
 import math
 import random
 import arcade
-from classes.Utils import Point, angle_between_Ox_and_line_on_two_points, distance_between_two_points
+from classes.Utils import Point, angle_between_x_axis_and_line_through_points, distance_between_two_points
 
 from constants import HALF_PI, PURPLE_IMG
 
@@ -64,7 +64,7 @@ class RedEntity(Entity):
         for blue_entity in blue_entities:
             blue_entity_center = Point(blue_entity.center_x, blue_entity.center_y)
             if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
-                self.movement_angle = angle_between_Ox_and_line_on_two_points(self_center, blue_entity_center)
+                self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, blue_entity_center)
 
         self.check_for_collision_with_screen()
         super().update()
