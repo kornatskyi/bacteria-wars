@@ -58,10 +58,17 @@ class Welcome(arcade.Window):
         # blue_entities = [self.blue_entity]
         # red_entities = [self.red_entity]
         # self.blue_entity.update()
-        for entity in self.blue_entities:
-            entity.update()
-        for entity in self.food_entities:
-            entity.update(self.blue_entities)
+        for entity in self.blue_entities[:]:
+            if not entity.is_alive:
+                self.blue_entities.remove(entity)
+            else:
+                entity.update(self.food_entities)
+                
+        for entity in self.food_entities[:]:
+            if not entity.is_alive:
+                self.food_entities.remove(entity)
+            else:
+                entity.update(self.blue_entities)
         # for blue_entity in self.blue_entities:
         #     blue_entity.update()
         # self.red_entity.update(blue_entities)

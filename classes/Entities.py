@@ -13,6 +13,7 @@ class Entity(arcade.Sprite):
         self.speed = 1
         self.movement_angle = movement_angle
         self.energy = 100
+        self.is_alive = True
 
     def move(self):
         delta_x = self.speed * math.cos(self.movement_angle)
@@ -47,7 +48,7 @@ class Entity(arcade.Sprite):
 class BlueEntity(Entity):
     def __init__(self, image, center_x=0, center_y=0, scale=0.1, movement_angle = math.pi):
         super().__init__(image=image, center_x=center_x, center_y=center_y, scale=scale, movement_angle = movement_angle)
-        self.vision_radius = 30
+        self.vision_radius = 50
         self.energy = 1000
 
     def update(self, food_entities: list["Food"]=[], red_entities: list["RedEntity"]=[]):
@@ -58,12 +59,15 @@ class BlueEntity(Entity):
         # chase food
         self_center = Point(self.center_x, self.center_y)
         for food_entity in food_entities:
-            blue_entity_center = Point(food_entity.center_x, food_entity.center_y)
-            if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
-                self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, blue_entity_center)
+            food_entity_center = Point(food_entity.center_x, food_entity.center_y)
+            if distance_between_two_points(self_center, food_entity_center) < self.vision_radius:
+                self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, food_entity_center)
         super().update()
         pass
-
+    
+    def kill(self):
+        self.is_alive = False
+        return super().kill()
 
 class RedEntity(Entity):
     def __init__(self, image, center_x=0, center_y=0, scale=0.1):
@@ -81,12 +85,20 @@ class RedEntity(Entity):
                 self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, blue_entity_center)
         super().update()
         pass
+    
+    def kill(self):
+        self.is_alive = False
+        return super().kill()
 
 
 class Food(Entity):
     def __init__(self, center_x=0, center_y=0):
         super().__init__(PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1)
 
+    def kill(self):
+        self.is_alive = False
+        return super().kill()
+        
     def update(self, blue_entities: list[Entity]):
         for blue_entity in blue_entities:
             if arcade.check_for_collision(blue_entity, self):
