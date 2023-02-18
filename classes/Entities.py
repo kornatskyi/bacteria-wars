@@ -7,11 +7,12 @@ from constants import HALF_PI, PURPLE_IMG
 
 
 class Entity(arcade.Sprite):
-    def __init__(self, image, center_x=0, center_y=0, scale=0.1):
+    def __init__(self, image, scale=0.1, center_x=0, center_y=0, movement_angle = math.pi /2):
         super().__init__(image, scale, center_x=center_x, center_y=center_y)
         # initial position
-        self.speed = 5
-        self.movement_angle = math.pi
+        self.speed = 1
+        self.movement_angle = movement_angle
+        self.energy = 100
 
     def move(self):
         delta_x = self.speed * math.cos(self.movement_angle)
@@ -28,7 +29,7 @@ class Entity(arcade.Sprite):
             self.movement_angle = math.pi - self.movement_angle
             self.right = viewport_right
         if self.bottom < viewport_bottom:
-            self.movement_angle =  2 * math.pi - self.movement_angle
+            self.movement_angle = 2 * math.pi - self.movement_angle
             self.bottom = viewport_bottom
         elif self.top > viewport_top:
             self.movement_angle = 2 * math.pi - self.movement_angle
@@ -44,12 +45,22 @@ class Entity(arcade.Sprite):
 
 
 class BlueEntity(Entity):
-    def __init__(self, image, center_x=0, center_y=0, scale=0.1):
-        super().__init__(image, center_x, center_y, scale)
+    def __init__(self, image, center_x=0, center_y=0, scale=0.1, movement_angle = math.pi):
+        super().__init__(image=image, center_x=center_x, center_y=center_y, scale=scale, movement_angle = movement_angle)
         self.vision_radius = 30
+        self.energy = 1000
 
-    def update(self, red_entities: list["RedEntity"]):
+    def update(self, food_entities: list["Food"]=[], red_entities: list["RedEntity"]=[]):
         self.check_for_collision_with_screen()
+        self.energy -= 1
+        if self.energy <= 0:
+            self.kill()
+        # chase food
+        self_center = Point(self.center_x, self.center_y)
+        for food_entity in food_entities:
+            blue_entity_center = Point(food_entity.center_x, food_entity.center_y)
+            if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
+                self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, blue_entity_center)
         super().update()
         pass
 
@@ -60,13 +71,14 @@ class RedEntity(Entity):
         self.vision_radius = 100
 
     def update(self, blue_entities: list[BlueEntity]):
+        self.check_for_collision_with_screen()
+        
+        # chase food
         self_center = Point(self.center_x, self.center_y)
         for blue_entity in blue_entities:
             blue_entity_center = Point(blue_entity.center_x, blue_entity.center_y)
             if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
                 self.movement_angle = angle_between_x_axis_and_line_through_points(self_center, blue_entity_center)
-
-        self.check_for_collision_with_screen()
         super().update()
         pass
 

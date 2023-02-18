@@ -11,3 +11,4 @@ RED_IMG = "./assets/red.png"
 PURPLE_IMG = "./assets/purple.png"
 STEP_SIZE = 1
 HALF_PI = math.pi / 2
+
