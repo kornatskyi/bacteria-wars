@@ -15,12 +15,17 @@ def distance_between_two_points(point_one: Point, point_two: Point) -> float:
         point_two (Point): coordinates of a second point
 
     Returns:
-        float: absolute distance between two points 
+        float: absolute distance between two points
     """
-    return math.sqrt((abs(point_one.x) - abs(point_two.x))**2 + (abs(point_one.y) - abs(point_two.y))**2)
+    return math.sqrt(
+        (abs(point_one.x) - abs(point_two.x)) ** 2
+        + (abs(point_one.y) - abs(point_two.y)) ** 2
+    )
 
 
-def angle_between_x_axis_and_line_through_points(point_a: Point, point_b: Point) -> float:
+def angle_between_x_axis_and_line_through_points(
+    point_a: Point, point_b: Point
+) -> float:
     """Returns the angle (in radians) between the positive x-axis and the line passing through two points.
 
     Args:

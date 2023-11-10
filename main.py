@@ -3,83 +3,100 @@
 
 # Imports
 import math
-from typing import Union
 import arcade
 import random
-from classes.Entities import BlueEntity, Entity, Food, RedEntity
+from classes.Environment import Environment
+from classes.Entities import Herbivore, Plant, Carnivore
 from constants import *
 
 
-class EntityFactory:
-    @staticmethod
-    def create_entity(entity_type: Union["BlueEntity", "Food"]):
-        if entity_type == "BlueEntity":
-            return BlueEntity(BLUE_IMG,
-                              center_x=random.random() * SCREEN_WIDTH,
-                              center_y=random.random() * SCREEN_HEIGHT,
-                              movement_angle=random.random() * 2 * math.pi)
-        if entity_type == "Food":
-            return Food(
+class EntityManager:
+    def __init__(self):
+        self.environment = Environment()
+        self.init_state = {
+            "Carnivore": 20,
+            "Herbivore": 20,
+            "Plant": 100,
+        }
+
+    def create_entities(self):
+        for entity_type in self.init_state.keys():
+            entities = [
+                self.create_entity(entity_type)
+                for _ in range(self.init_state[entity_type])
+            ]
+            self.environment.entities.extend(entities)
+
+    def create_entity(self, entity_type: str):
+        # Simplified entity creation logic
+        # You can expand this to include your specific entity creation logic
+        if entity_type == "Carnivore":
+            return Carnivore(
+                RED_IMG,
                 center_x=random.random() * SCREEN_WIDTH,
-                center_y=random.random() * SCREEN_HEIGHT)
+                center_y=random.random() * SCREEN_HEIGHT,
+                movement_angle=random.random() * 2 * math.pi,
+            )
+        if entity_type == "Herbivore":
+            return Herbivore(
+                BLUE_IMG,
+                center_x=random.random() * SCREEN_WIDTH,
+                center_y=random.random() * SCREEN_HEIGHT,
+                movement_angle=random.random() * 2 * math.pi,
+            )
+        if entity_type == "Plant":
+            return Plant(
+                center_x=random.random() * SCREEN_WIDTH,
+                center_y=random.random() * SCREEN_HEIGHT,
+            )
+
+    def update_entities(self):
+        # Update and manage entities here
+        for entity in self.environment.entities:
+            if not entity.is_alive:
+                self.environment.entities.remove(entity)
+            else:
+                # Update entity, inject any necessary environment information
+                if isinstance(entity, Carnivore):
+                    entity.update(self.environment.entities)
+                elif isinstance(entity, Herbivore):
+                    entity.update(self.environment.entities)
+                else:
+                    entity.update()
 
 
-class Welcome(arcade.Window):
-    """Main welcome window
-    """
+class World(arcade.Window):
+    """Main welcome window"""
 
     def __init__(self):
-        """Initialize the window
-        """
+        """Initialize the window"""
 
         # Call the parent class constructor
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        self.set_location(100, 1000)  # Change 100, 100 to your desired coordinates
 
         # Set the background window
         arcade.set_background_color(arcade.color.WHITE)
 
-        self.food_entities = [EntityFactory.create_entity("Food")  for _ in range(10)]
-
-        self.blue_entities = [EntityFactory.create_entity("BlueEntity") for _ in range(10)]
+        self.entity_manager = EntityManager()
+        self.entity_manager.create_entities()
 
     def on_draw(self):
-        """Called whenever you need to draw your window
-        """
+        """Called whenever you need to draw your window"""
 
         # Clear the screen and start drawing
         arcade.start_render()
 
-        for entity in self.blue_entities:
-            entity.draw()
-        for entity in self.food_entities:
+        for entity in self.entity_manager.environment.entities:
             entity.draw()
 
         arcade.finish_render()
 
     def update(self, delta_time):
-        # if arcade.check_for_collision(self.red_entity, self.blue_entity):
-        # print("Collision detected!")
-        # self.blue_entity.move(1, 0)
-        # blue_entities = [self.blue_entity]
-        # red_entities = [self.red_entity]
-        # self.blue_entity.update()
-        for entity in self.blue_entities[:]:
-            if not entity.is_alive:
-                self.blue_entities.remove(entity)
-            else:
-                entity.update(self.food_entities)
-
-        for entity in self.food_entities[:]:
-            if not entity.is_alive:
-                self.food_entities.remove(entity)
-            else:
-                entity.update()
-        # for blue_entity in self.blue_entities:
-        #     blue_entity.update()
-        # self.red_entity.update(blue_entities)
+        self.entity_manager.update_entities()
 
 
 # Main code entry point
 if __name__ == "__main__":
-    app = Welcome()
+    app = World()
     arcade.run()

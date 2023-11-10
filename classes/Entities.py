@@ -1,13 +1,24 @@
 import math
 import random
 import arcade
-from classes.Utils import Point, angle_between_x_axis_and_line_through_points, distance_between_two_points
+from classes.Utils import (
+    Point,
+    angle_between_x_axis_and_line_through_points,
+    distance_between_two_points,
+)
 
 from constants import HALF_PI, PURPLE_IMG
 
 
 class Entity(arcade.Sprite):
-    def __init__(self, image, scale=0.1, center_x=0, center_y=0, movement_angle=math.pi / 2):
+    def __init__(
+        self,
+        image,
+        scale=0.1,
+        center_x=0,
+        center_y=0,
+        movement_angle=math.pi / 2,
+    ):
         super().__init__(image, scale, center_x=center_x, center_y=center_y)
         # initial position
         self.speed = 1
@@ -29,7 +40,12 @@ class Entity(arcade.Sprite):
         Check if the entity has collided with the edge of the screen
         and adjust the movement angle accordingly
         """
-        viewport_left, viewport_right, viewport_bottom, viewport_top = arcade.get_viewport()
+        (
+            viewport_left,
+            viewport_right,
+            viewport_bottom,
+            viewport_top,
+        ) = arcade.get_viewport()
         if self.left < viewport_left:
             self.movement_angle = math.pi - self.movement_angle
             self.left = viewport_left
@@ -55,14 +71,21 @@ class Entity(arcade.Sprite):
         return super().update()
 
 
-class BlueEntity(Entity):
-    def __init__(self, image, center_x=0, center_y=0, scale=0.1, movement_angle=math.pi):
-        super().__init__(image=image, center_x=center_x, center_y=center_y,
-                         scale=scale, movement_angle=movement_angle)
+class Herbivore(Entity):
+    def __init__(
+        self, image, center_x=0, center_y=0, scale=0.1, movement_angle=math.pi
+    ):
+        super().__init__(
+            image=image,
+            center_x=center_x,
+            center_y=center_y,
+            scale=scale,
+            movement_angle=movement_angle,
+        )
         self.vision_radius = 50
         self.energy = 1000
 
-    def update(self, food_entities: list["Food"] = [], red_entities: list["RedEntity"] = []):
+    def update(self, entities: list[Entity]):
         """
         Update the blue entity's position, energy, and actions based on its surroundings.
         """
@@ -72,29 +95,40 @@ class BlueEntity(Entity):
         # Kill entity if energy is too low
         if self.energy <= 0:
             self.kill()
-        # Eat food entities with which the blue entity collides
-        self.eat(food_entities)
-        # Chase after food entities
-        self_center = Point(self.center_x, self.center_y)
-        for food_entity in food_entities:
-            food_entity_center = Point(
-                food_entity.center_x, food_entity.center_y)
-            if distance_between_two_points(self_center, food_entity_center) < self.vision_radius:
-                self.movement_angle = angle_between_x_axis_and_line_through_points(
-                    self_center, food_entity_center)
+
+        for entity in entities:
+            # Eat plant entities
+            if isinstance(entity, Plant):
+                ate = self.eat(entity)
+                if not ate:
+                    self_center = Point(self.center_x, self.center_y)
+                    plant_entity_center = Point(entity.center_x, entity.center_y)
+                    if (
+                        # Chase after food entities
+                        distance_between_two_points(self_center, plant_entity_center)
+                        < self.vision_radius
+                    ):
+                        self.movement_angle = (
+                            angle_between_x_axis_and_line_through_points(
+                                self_center, plant_entity_center
+                            )
+                        )
+
         # Update the entity's position and sprite
         super().update()
 
-    def eat(self, food_entities: list["Food"]):
+    def eat(self, plant: "Plant"):
         """
-        Check for collisions with food entities and increase energy accordingly
+        Check for collisions with a plant entity and increase energy accordingly
+        If ate return True else False
         """
-        for food_entity in food_entities:
-            if arcade.check_for_collision(food_entity, self):
-                self.energy += food_entity.energy
-                # Remove the food entity
-                food_entity.kill()
-                break
+        if arcade.check_for_collision(plant, self):
+            self.energy += plant.energy
+            # Remove the plant entity
+            plant.kill()
+            return True
+        else:
+            return False
 
     def kill(self):
         """
@@ -104,31 +138,68 @@ class BlueEntity(Entity):
         return super().kill()
 
 
-class RedEntity(Entity):
-    def __init__(self, image, center_x=0, center_y=0, scale=0.1):
-        super().__init__(image, center_x, center_y, scale)
-        self.vision_radius = 100
+class Carnivore(Entity):
+    def __init__(
+        self, image, center_x=0, center_y=0, scale=0.1, movement_angle=math.pi
+    ):
+        super().__init__(
+            image=image,
+            center_x=center_x,
+            center_y=center_y,
+            scale=scale,
+            movement_angle=movement_angle,
+        )
+        self.vision_radius = 50
+        self.energy = 1000
 
-    def update(self, blue_entities: list[BlueEntity]):
+    def update(self, entities: list[Entity]):
+        # Check for collisions with the screen and decrease energy
         self.check_for_collision_with_screen()
+        self.energy -= 2
+        # Kill entity if energy is too low
+        if self.energy <= 0:
+            self.kill()
 
         # chase food
-        self_center = Point(self.center_x, self.center_y)
-        for blue_entity in blue_entities:
-            blue_entity_center = Point(
-                blue_entity.center_x, blue_entity.center_y)
-            if distance_between_two_points(self_center, blue_entity_center) < self.vision_radius:
-                self.movement_angle = angle_between_x_axis_and_line_through_points(
-                    self_center, blue_entity_center)
+        for entity in entities:
+            for entity in entities:
+                # Eat plant entities
+                if isinstance(entity, Herbivore):
+                    ate = self.eat(entity)
+                    if not ate:
+                        self_center = Point(self.center_x, self.center_y)
+                        entity_center = Point(entity.center_x, entity.center_y)
+                        if (
+                            # Chase after food entities
+                            distance_between_two_points(self_center, entity_center)
+                            < self.vision_radius
+                        ):
+                            self.movement_angle = (
+                                angle_between_x_axis_and_line_through_points(
+                                    self_center, entity_center
+                                )
+                            )
         super().update()
-        pass
+
+    def eat(self, herbivore: "Herbivore"):
+        """
+        Check for collisions with a plant entity and increase energy accordingly
+        If ate return True else False
+        """
+        if arcade.check_for_collision(herbivore, self):
+            self.energy += herbivore.energy
+            # Remove the plant entity
+            herbivore.kill()
+            return True
+        else:
+            return False
 
     def kill(self):
         self.is_alive = False
         return super().kill()
 
 
-class Food(Entity):
+class Plant(Entity):
     def __init__(self, center_x=0, center_y=0):
         super().__init__(PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1)
         self.energy = 100
