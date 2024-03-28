@@ -1,6 +1,7 @@
 import math
 import random
 import arcade
+from classes.QuadTree import QuadTree
 from classes.Utils import (
     Point,
     angle_between_x_axis_and_line_through_points,
@@ -85,7 +86,7 @@ class Herbivore(Entity):
         self.vision_radius = 50
         self.energy = 1000
 
-    def update(self, entities: list[Entity]):
+    def update(self, qt: QuadTree):
         """
         Update the blue entity's position, energy, and actions based on its surroundings.
         """
@@ -96,7 +97,8 @@ class Herbivore(Entity):
         if self.energy <= 0:
             self.kill()
 
-        for entity in entities:
+        nearby_entities = qt.retrieve(self)
+        for entity in nearby_entities:
             # Eat plant entities
             if isinstance(entity, Plant):
                 ate = self.eat(entity)
@@ -152,33 +154,32 @@ class Carnivore(Entity):
         self.vision_radius = 50
         self.energy = 1000
 
-    def update(self, entities: list[Entity]):
+    def update(self, qt: QuadTree):
         # Check for collisions with the screen and decrease energy
         self.check_for_collision_with_screen()
         self.energy -= 2
         # Kill entity if energy is too low
         if self.energy <= 0:
             self.kill()
-
+        nearby_entities = qt.retrieve(self)
         # chase food
-        for entity in entities:
-            for entity in entities:
-                # Eat plant entities
-                if isinstance(entity, Herbivore):
-                    ate = self.eat(entity)
-                    if not ate:
-                        self_center = Point(self.center_x, self.center_y)
-                        entity_center = Point(entity.center_x, entity.center_y)
-                        if (
-                            # Chase after food entities
-                            distance_between_two_points(self_center, entity_center)
-                            < self.vision_radius
-                        ):
-                            self.movement_angle = (
-                                angle_between_x_axis_and_line_through_points(
-                                    self_center, entity_center
-                                )
+        for entity in nearby_entities:
+            # Eat plant entities
+            if isinstance(entity, Herbivore):
+                ate = self.eat(entity)
+                if not ate:
+                    self_center = Point(self.center_x, self.center_y)
+                    entity_center = Point(entity.center_x, entity.center_y)
+                    if (
+                        # Chase after food entities
+                        distance_between_two_points(self_center, entity_center)
+                        < self.vision_radius
+                    ):
+                        self.movement_angle = (
+                            angle_between_x_axis_and_line_through_points(
+                                self_center, entity_center
                             )
+                        )
         super().update()
 
     def eat(self, herbivore: "Herbivore"):

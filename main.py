@@ -7,6 +7,7 @@ import arcade
 import random
 from classes.Environment import Environment
 from classes.Entities import Herbivore, Plant, Carnivore
+from classes.QuadTree import QuadTree
 from constants import *
 
 
@@ -14,10 +15,11 @@ class EntityManager:
     def __init__(self):
         self.environment = Environment()
         self.init_state = {
-            "Carnivore": 20,
-            "Herbivore": 20,
-            "Plant": 100,
+            "Carnivore": 30,
+            "Herbivore": 30,
+            "Plant": 10,
         }
+        self.qt = QuadTree(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
 
     def create_entities(self):
         for entity_type in self.init_state.keys():
@@ -51,6 +53,10 @@ class EntityManager:
             )
 
     def update_entities(self):
+        self.qt.clear()
+        for entity in self.environment.entities:
+            # populate quad tree
+            self.qt.insert(entity)
         # Update and manage entities here
         for entity in self.environment.entities:
             if not entity.is_alive:
@@ -58,9 +64,9 @@ class EntityManager:
             else:
                 # Update entity, inject any necessary environment information
                 if isinstance(entity, Carnivore):
-                    entity.update(self.environment.entities)
+                    entity.update(self.qt)
                 elif isinstance(entity, Herbivore):
-                    entity.update(self.environment.entities)
+                    entity.update(self.qt)
                 else:
                     entity.update()
 
@@ -86,6 +92,7 @@ class World(arcade.Window):
 
         # Clear the screen and start drawing
         arcade.start_render()
+        self.entity_manager.qt.root.draw(arcade)  # draw quads
 
         for entity in self.entity_manager.environment.entities:
             entity.draw()
@@ -94,6 +101,7 @@ class World(arcade.Window):
 
     def update(self, delta_time):
         self.entity_manager.update_entities()
+        pass
 
 
 # Main code entry point
