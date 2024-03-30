@@ -9,7 +9,7 @@ class QuadTreeNode:
         self.depth = depth
         self.entities = []
         self.children: list[QuadTreeNode] = []
-        
+
     def draw(self, arcade):
         arcade.draw_rectangle_outline(
             center_x=self.x + self.width / 2,
@@ -17,7 +17,7 @@ class QuadTreeNode:
             width=self.width,
             height=self.height,
             color=arcade.color.RED,
-            border_width=2
+            border_width=2,
         )
         for child in self.children:
             child.draw(arcade)
@@ -86,7 +86,10 @@ class QuadTreeNode:
 
         self.entities.append(entity)
 
-        if len(self.entities) > self.max_entities and self.depth < self.max_depth:
+        if (
+            len(self.entities) > self.max_entities
+            and self.depth < self.max_depth
+        ):
             self.subdivide()
             for e in self.entities:
                 child = self.get_child(e)

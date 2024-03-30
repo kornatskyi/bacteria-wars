@@ -1,6 +1,3 @@
-# Basic arcade program using objects
-# Displays a white window with a blue circle in the middle
-
 # Imports
 import math
 import arcade
@@ -8,15 +5,24 @@ import random
 from classes.Environment import Environment
 from classes.Entities import Herbivore, Plant, Carnivore
 from classes.QuadTree import QuadTree
-from constants import *
+from constants import (
+    BLUE_IMG,
+    RED_IMG,
+    SCREEN_HEIGHT,
+    SCREEN_TITLE,
+    SCREEN_WIDTH,
+)
+
+# Dev imports
+import cProfile
 
 
 class EntityManager:
     def __init__(self):
         self.environment = Environment()
         self.init_state = {
-            "Carnivore": 30,
-            "Herbivore": 30,
+            "Carnivore": 100,
+            "Herbivore": 1000,
             "Plant": 10,
         }
         self.qt = QuadTree(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
@@ -79,7 +85,9 @@ class World(arcade.Window):
 
         # Call the parent class constructor
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-        self.set_location(100, 1000)  # Change 100, 100 to your desired coordinates
+        self.set_location(
+            100, 1000
+        )  # Change 100, 100 to your desired coordinates
 
         # Set the background window
         arcade.set_background_color(arcade.color.WHITE)
@@ -92,7 +100,7 @@ class World(arcade.Window):
 
         # Clear the screen and start drawing
         arcade.start_render()
-        self.entity_manager.qt.root.draw(arcade)  # draw quads
+        self.entity_manager.qt.root.draw(arcade)  # draw quad tree
 
         for entity in self.entity_manager.environment.entities:
             entity.draw()
@@ -107,4 +115,5 @@ class World(arcade.Window):
 # Main code entry point
 if __name__ == "__main__":
     app = World()
-    arcade.run()
+
+    cProfile.run("arcade.run()", "profile_data.prof")

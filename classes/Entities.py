@@ -1,5 +1,4 @@
 import math
-import random
 import arcade
 from classes.Config import Config
 from classes.QuadTree import QuadTree
@@ -9,7 +8,7 @@ from classes.Utils import (
     distance_between_two_points,
 )
 
-from constants import HALF_PI, PURPLE_IMG
+from constants import PURPLE_IMG
 
 
 class Entity(arcade.Sprite):
@@ -94,7 +93,8 @@ class Herbivore(Entity):
 
     def update(self, qt: QuadTree):
         """
-        Update the blue entity's position, energy, and actions based on its surroundings.
+        Update the blue entity's position, energy,
+        and actions based on its surroundings.
         """
         # Check for collisions with the screen and decrease energy
         self.check_for_collision_with_screen()
@@ -110,10 +110,14 @@ class Herbivore(Entity):
                 ate = self.eat(entity)
                 if not ate:
                     self_center = Point(self.center_x, self.center_y)
-                    plant_entity_center = Point(entity.center_x, entity.center_y)
+                    plant_entity_center = Point(
+                        entity.center_x, entity.center_y
+                    )
                     if (
                         # Chase after food entities
-                        distance_between_two_points(self_center, plant_entity_center)
+                        distance_between_two_points(
+                            self_center, plant_entity_center
+                        )
                         < self.vision_radius
                     ):
                         self.movement_angle = (
@@ -127,7 +131,8 @@ class Herbivore(Entity):
 
     def eat(self, plant: "Plant"):
         """
-        Check for collisions with a plant entity and increase energy accordingly
+        Check for collisions with a plant entity
+        and increase energy accordingly
         If ate return True else False
         """
         if arcade.check_for_collision(plant, self):
@@ -190,7 +195,8 @@ class Carnivore(Entity):
 
     def eat(self, herbivore: "Herbivore"):
         """
-        Check for collisions with a plant entity and increase energy accordingly
+        Check for collisions with a plant entity
+        and increase energy accordingly
         If ate return True else False
         """
         if arcade.check_for_collision(herbivore, self):
@@ -208,7 +214,9 @@ class Carnivore(Entity):
 
 class Plant(Entity):
     def __init__(self, center_x=0, center_y=0):
-        super().__init__(PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1)
+        super().__init__(
+            PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1
+        )
         self.energy = 100
 
     def kill(self):

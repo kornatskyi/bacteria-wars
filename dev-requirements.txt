@@ -1,0 +1,4 @@
+black==24.3.0
+flake8==7.0.0
+flake8-bugbear==24.2.6
+snakeviz==2.2.0
