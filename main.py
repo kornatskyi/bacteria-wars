@@ -21,8 +21,8 @@ class EntityManager:
     def __init__(self):
         self.environment = Environment()
         self.init_state = {
-            "Carnivore": 1,
-            "Herbivore": 0,
+            "Carnivore": 500,
+            "Herbivore": 300,
             "Plant": 0,
         }
         self.qt = QuadTree(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
@@ -44,14 +44,14 @@ class EntityManager:
                 RED_IMG,
                 center_x=random.random() * SCREEN_WIDTH,
                 center_y=random.random() * SCREEN_HEIGHT,
-                movement_angle=random.random() * 2 * math.pi,
+                angle=math.degrees(random.random() * 2 * math.pi),
             )
         if entity_type == "Herbivore":
             return Herbivore(
                 BLUE_IMG,
                 center_x=random.random() * SCREEN_WIDTH,
                 center_y=random.random() * SCREEN_HEIGHT,
-                movement_angle=random.random() * 2 * math.pi,
+                angle=math.degrees(random.random() * 2 * math.pi),
             )
         if entity_type == "Plant":
             return Plant(
