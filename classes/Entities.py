@@ -1,25 +1,29 @@
 import math
 import arcade
 from classes.Config import Config
-from classes.QuadTree import QuadTree
-from classes.Utils import (
-    Point,
-    angle_between_x_axis_and_line_through_points,
-    distance_between_two_points,
-)
-from constants import PURPLE_IMG
+from classes.Environment import Environment
+from constants import PURPLE_IMG, SCREEN_HEIGHT, SCREEN_WIDTH
 
 
 class Entity(arcade.Sprite):
-    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
+    def __init__(
+        self,
+        environment: Environment,
+        image,
+        center_x=0,
+        center_y=0,
+        angle=0,
+        **kwargs,
+    ):
         super().__init__(
             image,
-            scale=5,
+            scale=3,
             center_x=center_x,
             center_y=center_y,
             hit_box_algorithm=None,
             **kwargs,
         )
+        self.environment = environment
         # initial position
         self.angle = angle
         self.speed = 5
@@ -43,28 +47,19 @@ class Entity(arcade.Sprite):
         Check if the entity has collided with the edge of the screen
         and adjust the movement angle accordingly
         """
-        (
-            viewport_left,
-            viewport_right,
-            viewport_bottom,
-            viewport_top,
-        ) = arcade.get_viewport()
-        if self.left < viewport_left:
+        if self.center_x < 0:
             self.turn(180 - self.angle)
-            self.left = viewport_left
-        elif self.right > viewport_right:
+            self.center_x = 0
+        if self.center_y < 0:
+            self.turn(360 - self.angle)
+            self.center_y = 0
+        if self.center_x > SCREEN_WIDTH:
             self.turn(180 - self.angle)
-            self.right = viewport_right
-        if self.bottom < viewport_bottom:
-            self.turn(360 - self.angle)
-            self.bottom = viewport_bottom
-        elif self.top > viewport_top:
-            self.turn(360 - self.angle)
-            self.top = viewport_top
+            self.center_x = SCREEN_WIDTH
 
-    def draw(self):
-        super().draw()
-        self.draw_hit_box()
+        if self.center_y > SCREEN_HEIGHT:
+            self.turn(360 - self.angle)
+            self.center_y = SCREEN_HEIGHT
 
     def update(self):
         """
@@ -76,8 +71,17 @@ class Entity(arcade.Sprite):
 
 
 class Herbivore(Entity):
-    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
+    def __init__(
+        self,
+        environment: Environment,
+        image,
+        center_x=0,
+        center_y=0,
+        angle=0,
+        **kwargs,
+    ):
         super().__init__(
+            environment=environment,
             image=image,
             center_x=center_x,
             center_y=center_y,
@@ -87,7 +91,7 @@ class Herbivore(Entity):
         self.vision_radius = 50
         self.energy = 1000
 
-    def update(self, qt: QuadTree):
+    def update(self):
         """
         Update the blue entity's position, energy,
         and actions based on its surroundings.
@@ -99,44 +103,23 @@ class Herbivore(Entity):
         if Config.is_mortal and self.energy <= 0:
             self.kill()
 
-        nearby_entities = qt.retrieve(self)
-        for entity in nearby_entities:
-            # Eat plant entities
-            if isinstance(entity, Plant):
-                ate = self.eat(entity)
-                if not ate:
-                    self_center = Point(self.center_x, self.center_y)
-                    plant_entity_center = Point(
-                        entity.center_x, entity.center_y
-                    )
-                    if (
-                        # Chase after food entities
-                        distance_between_two_points(
-                            self_center, plant_entity_center
-                        )
-                        < self.vision_radius
-                    ):
-                        self.movement_angle = (
-                            angle_between_x_axis_and_line_through_points(
-                                self_center, plant_entity_center
-                            )
-                        )
+        plants = arcade.check_for_collision_with_list(
+            self, self.environment.plants
+        )
+
+        for plant in plants:
+            if Config.can_eat:
+                self.eat(plant)
 
         # Update the entity's position and sprite
         super().update()
 
     def eat(self, plant: "Plant"):
         """
-        Check for collisions with a plant entity
-        and increase energy accordingly
-        If ate return True else False
+        !TODO:
         """
-        if arcade.check_for_collision(plant, self) and Config.can_eat:
-            self.energy += plant.energy
-            plant.kill()
-            return True
-        else:
-            return False
+        self.energy += plant.energy
+        plant.kill()
 
     def kill(self):
         """
@@ -147,8 +130,17 @@ class Herbivore(Entity):
 
 
 class Carnivore(Entity):
-    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
+    def __init__(
+        self,
+        environment: Environment,
+        image,
+        center_x=0,
+        center_y=0,
+        angle=0,
+        **kwargs,
+    ):
         super().__init__(
+            environment=environment,
             image=image,
             center_x=center_x,
             center_y=center_y,
@@ -158,32 +150,20 @@ class Carnivore(Entity):
         self.vision_radius = 50
         self.energy = 1000
 
-    def update(self, qt: QuadTree):
+    def update(self):
         # Check for collisions with the screen and decrease energy
         self.check_for_collision_with_screen()
         self.energy -= 2
         # Kill entity if energy is too low
         if Config.is_mortal and self.energy <= 0:
             self.kill()
-        nearby_entities = qt.retrieve(self)
-        # chase food
-        for entity in nearby_entities:
-            # Eat plant entities
-            if isinstance(entity, Herbivore):
-                ate = self.eat(entity)
-                if not ate:
-                    self_center = Point(self.center_x, self.center_y)
-                    entity_center = Point(entity.center_x, entity.center_y)
-                    if (
-                        # Chase after food entities
-                        distance_between_two_points(self_center, entity_center)
-                        < self.vision_radius
-                    ):
-                        self.movement_angle = (
-                            angle_between_x_axis_and_line_through_points(
-                                self_center, entity_center
-                            )
-                        )
+
+        herbs = arcade.check_for_collision_with_list(
+            self, self.environment.herbivores
+        )
+        for herb in herbs:
+            if Config.can_eat:
+                self.eat(herb)
         super().update()
 
     def eat(self, herbivore: "Herbivore"):
@@ -205,9 +185,15 @@ class Carnivore(Entity):
 
 
 class Plant(Entity):
-    def __init__(self, center_x=0, center_y=0, **kwargs):
+    def __init__(
+        self, environment: Environment, center_x=0, center_y=0, **kwargs
+    ):
         super().__init__(
-            PURPLE_IMG, center_x=center_x, center_y=center_y, **kwargs
+            environment=environment,
+            image=PURPLE_IMG,
+            center_x=center_x,
+            center_y=center_y,
+            **kwargs,
         )
         self.energy = 100
 

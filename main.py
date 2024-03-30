@@ -2,9 +2,9 @@
 import math
 import arcade
 import random
+from classes.Config import Config
 from classes.Environment import Environment
 from classes.Entities import Herbivore, Plant, Carnivore
-from classes.QuadTree import QuadTree
 from constants import (
     BLUE_IMG,
     RED_IMG,
@@ -20,62 +20,43 @@ import cProfile
 class EntityManager:
     def __init__(self):
         self.environment = Environment()
-        self.init_state = {
-            "Carnivore": 500,
-            "Herbivore": 300,
-            "Plant": 0,
-        }
-        self.qt = QuadTree(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
 
     def create_entities(self):
-        for entity_type in self.init_state.keys():
-            entities = [
-                self.create_entity(entity_type)
-                for _ in range(self.init_state[entity_type])
-            ]
-            self.environment.entities.extend(entities)
+        for _ in range(Config.num_of_carnivores):
+            self.environment.carnivores.append(self.create_entity("Carnivore"))
+        for _ in range(Config.num_of_herbivores):
+            self.environment.herbivores.append(self.create_entity("Herbivore"))
+        for _ in range(Config.num_of_plants):
+            self.environment.plants.append(self.create_entity("Plant"))
 
     def create_entity(self, entity_type: str):
-        # Simplified entity creation logic
-        # You can expand this to include
-        # your specific entity creation logic
         if entity_type == "Carnivore":
             return Carnivore(
-                RED_IMG,
+                environment=self.environment,
+                image=RED_IMG,
                 center_x=random.random() * SCREEN_WIDTH,
                 center_y=random.random() * SCREEN_HEIGHT,
                 angle=math.degrees(random.random() * 2 * math.pi),
             )
         if entity_type == "Herbivore":
             return Herbivore(
-                BLUE_IMG,
+                environment=self.environment,
+                image=BLUE_IMG,
                 center_x=random.random() * SCREEN_WIDTH,
                 center_y=random.random() * SCREEN_HEIGHT,
                 angle=math.degrees(random.random() * 2 * math.pi),
             )
         if entity_type == "Plant":
             return Plant(
+                environment=self.environment,
                 center_x=random.random() * SCREEN_WIDTH,
                 center_y=random.random() * SCREEN_HEIGHT,
             )
 
     def update_entities(self):
-        self.qt.clear()
-        for entity in self.environment.entities:
-            # populate quad tree
-            self.qt.insert(entity)
-        # Update and manage entities here
-        for entity in self.environment.entities:
-            if not entity.is_alive:
-                self.environment.entities.remove(entity)
-            else:
-                # Update entity, inject any necessary environment information
-                if isinstance(entity, Carnivore):
-                    entity.update(self.qt)
-                elif isinstance(entity, Herbivore):
-                    entity.update(self.qt)
-                else:
-                    entity.update()
+        self.environment.carnivores.update()
+        self.environment.herbivores.update()
+        self.environment.plants.update()
 
 
 class World(arcade.Window):
@@ -95,16 +76,19 @@ class World(arcade.Window):
 
         self.entity_manager = EntityManager()
         self.entity_manager.create_entities()
+        pass
 
     def on_draw(self):
         """Called whenever you need to draw your window"""
 
         # Clear the screen and start drawing
         arcade.start_render()
-        self.entity_manager.qt.root.draw(arcade)  # draw quad tree
-
-        for entity in self.entity_manager.environment.entities:
-            entity.draw()
+        self.entity_manager.environment.carnivores.draw()
+        # self.entity_manager.environment.carnivores.draw_hit_boxes()
+        self.entity_manager.environment.herbivores.draw()
+        # self.entity_manager.environment.herbivores.draw_hit_boxes()
+        self.entity_manager.environment.plants.draw()
+        # self.entity_manager.environment.plants.draw_hit_boxes()
 
         arcade.finish_render()
 
