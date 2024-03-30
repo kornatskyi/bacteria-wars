@@ -21,9 +21,9 @@ class EntityManager:
     def __init__(self):
         self.environment = Environment()
         self.init_state = {
-            "Carnivore": 100,
-            "Herbivore": 1000,
-            "Plant": 10,
+            "Carnivore": 1,
+            "Herbivore": 0,
+            "Plant": 0,
         }
         self.qt = QuadTree(width=SCREEN_WIDTH, height=SCREEN_HEIGHT)
 
