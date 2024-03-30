@@ -15,6 +15,28 @@ from constants import (
 
 # Dev imports
 import cProfile
+import collections
+import time
+import timeit
+
+
+class FPSCounter:
+    def __init__(self):
+        self.time = time.perf_counter()
+        self.frame_times = collections.deque(maxlen=60)
+
+    def tick(self):
+        t1 = time.perf_counter()
+        dt = t1 - self.time
+        self.time = t1
+        self.frame_times.append(dt)
+
+    def get_fps(self):
+        total_time = sum(self.frame_times)
+        if total_time == 0:
+            return 0
+        else:
+            return len(self.frame_times) / sum(self.frame_times)
 
 
 class EntityManager:
@@ -76,13 +98,21 @@ class World(arcade.Window):
 
         self.entity_manager = EntityManager()
         self.entity_manager.create_entities()
+
+        # Performance measurers
+        self.processing_time = 0
+        self.draw_time = 0
+        self.program_start_time = timeit.default_timer()
+        self.fps = FPSCounter()
+
         pass
 
     def on_draw(self):
         """Called whenever you need to draw your window"""
+        # Start timing how long this takes
+        draw_start_time = timeit.default_timer()
 
-        # Clear the screen and start drawing
-        arcade.start_render()
+        self.clear()
         self.entity_manager.environment.carnivores.draw()
         # self.entity_manager.environment.carnivores.draw_hit_boxes()
         self.entity_manager.environment.herbivores.draw()
@@ -90,10 +120,60 @@ class World(arcade.Window):
         self.entity_manager.environment.plants.draw()
         # self.entity_manager.environment.plants.draw_hit_boxes()
 
-        arcade.finish_render()
+        # Display info on sprites
+        output = f"Carnivores count: {len(self.entity_manager.environment.carnivores):,}"
+        arcade.draw_text(
+            output,
+            20,
+            SCREEN_HEIGHT - 20,
+            arcade.color.BLACK,
+            16,
+            bold=True,
+        )
+
+        # Display timings
+        output = f"Processing time: {self.processing_time:.3f}"
+        arcade.draw_text(
+            output,
+            20,
+            SCREEN_HEIGHT - 40,
+            arcade.color.BLACK,
+            16,
+            bold=True,
+        )
+
+        output = f"Drawing time: {self.draw_time:.3f}"
+        arcade.draw_text(
+            output,
+            20,
+            SCREEN_HEIGHT - 60,
+            arcade.color.BLACK,
+            16,
+            bold=True,
+        )
+
+        fps = self.fps.get_fps()
+        output = f"FPS: {fps:3.0f}"
+        arcade.draw_text(
+            output,
+            20,
+            SCREEN_HEIGHT - 80,
+            arcade.color.BLACK,
+            16,
+            bold=True,
+        )
+
+        self.draw_time = timeit.default_timer() - draw_start_time
+        self.fps.tick()
 
     def update(self, delta_time):
+        # Start update timer
+        start_time = timeit.default_timer()
+
         self.entity_manager.update_entities()
+
+        # Save the time it took to do this.
+        self.processing_time = timeit.default_timer() - start_time
         pass
 
 
