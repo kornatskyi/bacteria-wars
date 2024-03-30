@@ -1,6 +1,7 @@
 import math
 import random
 import arcade
+from classes.Config import Config
 from classes.QuadTree import QuadTree
 from classes.Utils import (
     Point,
@@ -20,7 +21,12 @@ class Entity(arcade.Sprite):
         center_y=0,
         movement_angle=math.pi / 2,
     ):
-        super().__init__(image, scale, center_x=center_x, center_y=center_y)
+        super().__init__(
+            image,
+            scale,
+            center_x=center_x,
+            center_y=center_y,
+        )
         # initial position
         self.speed = 1
         self.movement_angle = movement_angle
@@ -94,7 +100,7 @@ class Herbivore(Entity):
         self.check_for_collision_with_screen()
         self.energy -= 2
         # Kill entity if energy is too low
-        if self.energy <= 0:
+        if Config.is_mortal and self.energy <= 0:
             self.kill()
 
         nearby_entities = qt.retrieve(self)
@@ -159,7 +165,7 @@ class Carnivore(Entity):
         self.check_for_collision_with_screen()
         self.energy -= 2
         # Kill entity if energy is too low
-        if self.energy <= 0:
+        if Config.is_mortal and self.energy <= 0:
             self.kill()
         nearby_entities = qt.retrieve(self)
         # chase food
