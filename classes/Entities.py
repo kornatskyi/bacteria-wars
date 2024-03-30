@@ -11,34 +11,32 @@ from constants import PURPLE_IMG
 
 
 class Entity(arcade.Sprite):
-    def __init__(
-        self,
-        image,
-        scale=0.1,
-        center_x=0,
-        center_y=0,
-        movement_angle=math.pi / 2,
-    ):
+    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
         super().__init__(
             image,
-            scale,
+            scale=5,
             center_x=center_x,
             center_y=center_y,
+            hit_box_algorithm=None,
+            **kwargs,
         )
         # initial position
-        self.speed = 1
-        self.movement_angle = movement_angle
+        self.angle = angle
+        self.speed = 5
         self.energy = 100
         self.is_alive = True
+        # Set init speed and angle
+        self.forward(self.speed)
+        self.turn(self.angle)
 
-    def move(self):
+    def turn(self, angle: float):
         """
-        Move the entity in the direction specified by the movement angle
+        updates speed and rotates the sprite
+        parameters: angle - in degrees
         """
-        delta_x = self.speed * math.cos(self.movement_angle)
-        delta_y = self.speed * math.sin(self.movement_angle)
-        self.center_x += delta_x
-        self.center_y += delta_y
+        self.angle = angle
+        self.change_x = self.speed * math.cos(self.radians)
+        self.change_y = self.speed * math.sin(self.radians)
 
     def check_for_collision_with_screen(self):
         """
@@ -52,41 +50,39 @@ class Entity(arcade.Sprite):
             viewport_top,
         ) = arcade.get_viewport()
         if self.left < viewport_left:
-            self.movement_angle = math.pi - self.movement_angle
+            self.turn(180 - self.angle)
             self.left = viewport_left
         elif self.right > viewport_right:
-            self.movement_angle = math.pi - self.movement_angle
+            self.turn(180 - self.angle)
             self.right = viewport_right
         if self.bottom < viewport_bottom:
-            self.movement_angle = 2 * math.pi - self.movement_angle
+            self.turn(360 - self.angle)
             self.bottom = viewport_bottom
         elif self.top > viewport_top:
-            self.movement_angle = 2 * math.pi - self.movement_angle
+            self.turn(360 - self.angle)
             self.top = viewport_top
 
     def draw(self):
         super().draw()
+        self.draw_hit_box()
 
     def update(self):
         """
         Update the entity's position and check
         for collisions with the screen
         """
-        self.move()
         self.check_for_collision_with_screen()
         return super().update()
 
 
 class Herbivore(Entity):
-    def __init__(
-        self, image, center_x=0, center_y=0, scale=0.1, movement_angle=math.pi
-    ):
+    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
         super().__init__(
             image=image,
             center_x=center_x,
             center_y=center_y,
-            scale=scale,
-            movement_angle=movement_angle,
+            angle=angle,
+            **kwargs,
         )
         self.vision_radius = 50
         self.energy = 1000
@@ -135,9 +131,8 @@ class Herbivore(Entity):
         and increase energy accordingly
         If ate return True else False
         """
-        if arcade.check_for_collision(plant, self):
+        if arcade.check_for_collision(plant, self) and Config.can_eat:
             self.energy += plant.energy
-            # Remove the plant entity
             plant.kill()
             return True
         else:
@@ -152,15 +147,13 @@ class Herbivore(Entity):
 
 
 class Carnivore(Entity):
-    def __init__(
-        self, image, center_x=0, center_y=0, scale=0.1, movement_angle=math.pi
-    ):
+    def __init__(self, image, center_x=0, center_y=0, angle=0, **kwargs):
         super().__init__(
             image=image,
             center_x=center_x,
             center_y=center_y,
-            scale=scale,
-            movement_angle=movement_angle,
+            angle=angle,
+            **kwargs,
         )
         self.vision_radius = 50
         self.energy = 1000
@@ -199,9 +192,8 @@ class Carnivore(Entity):
         and increase energy accordingly
         If ate return True else False
         """
-        if arcade.check_for_collision(herbivore, self):
+        if arcade.check_for_collision(herbivore, self) and Config.can_eat:
             self.energy += herbivore.energy
-            # Remove the plant entity
             herbivore.kill()
             return True
         else:
@@ -213,9 +205,9 @@ class Carnivore(Entity):
 
 
 class Plant(Entity):
-    def __init__(self, center_x=0, center_y=0):
+    def __init__(self, center_x=0, center_y=0, **kwargs):
         super().__init__(
-            PURPLE_IMG, center_x=center_x, center_y=center_y, scale=0.1
+            PURPLE_IMG, center_x=center_x, center_y=center_y, **kwargs
         )
         self.energy = 100
 
