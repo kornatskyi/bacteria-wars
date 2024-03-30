@@ -37,7 +37,8 @@ class EntityManager:
 
     def create_entity(self, entity_type: str):
         # Simplified entity creation logic
-        # You can expand this to include your specific entity creation logic
+        # You can expand this to include
+        # your specific entity creation logic
         if entity_type == "Carnivore":
             return Carnivore(
                 RED_IMG,

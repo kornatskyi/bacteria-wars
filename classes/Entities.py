@@ -7,7 +7,6 @@ from classes.Utils import (
     angle_between_x_axis_and_line_through_points,
     distance_between_two_points,
 )
-
 from constants import PURPLE_IMG
 
 
@@ -70,7 +69,8 @@ class Entity(arcade.Sprite):
 
     def update(self):
         """
-        Update the entity's position and check for collisions with the screen
+        Update the entity's position and check
+        for collisions with the screen
         """
         self.move()
         self.check_for_collision_with_screen()
